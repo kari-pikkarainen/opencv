@@ -451,6 +451,17 @@ TEST(Photo_CalibrateRobertson, regression)
 
     Ptr<CalibrateRobertson> calibrate = createCalibrateRobertson();
     calibrate->process(images, response, times);
+    {
+        std::vector<Mat> ch; split(response, ch);
+        for (int c = 0; c < (int)ch.size(); c++) {
+            Mat nanmask = ch[c] != ch[c]; int nn = countNonZero(nanmask);
+            int first = -1; for (int i = 0; i < ch[c].rows; i++) if (cvIsNaN(ch[c].at<float>(i))) { first = i; break; }
+            std::cout << "MEASURE CalibrateRobertson_nan ch" << c << " nan=" << nn << " first=" << first
+                      << " r0=" << ch[c].at<float>(0) << " r1=" << ch[c].at<float>(1) << " r128=" << ch[c].at<float>(128) << " r254=" << ch[c].at<float>(254) << " r255=" << ch[c].at<float>(255) << std::endl;
+        }
+        int en = 0; std::vector<Mat> ech; split(expected, ech); for (auto& m : ech) en += countNonZero(m != m);
+        std::cout << "MEASURE CalibrateRobertson_expected_nan=" << en << std::endl;
+    }
     checkEqual(expected, response, 1e-1f, "CalibrateRobertson");
 }
 

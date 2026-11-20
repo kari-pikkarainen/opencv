@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           git clone --filter=blob:none --no-checkout --depth 1 -b 4.x https://github.com/opencv/opencv_extra.git extra
-          cd extra && MSYS_NO_PATHCONV=1 git sparse-checkout set --no-cone 'testdata/cv/hdr/' 'testdata/cv/features2d/' 'testdata/cv/shared/' 'testdata/cv/imgcodecs/' && git checkout
+          cd extra && MSYS_NO_PATHCONV=1 git sparse-checkout set --no-cone 'testdata/cv/hdr/' 'testdata/cv/features2d/' 'testdata/cv/shared/' 'testdata/cv/imgcodecs/' 'testdata/highgui/' && git checkout
           cp ../ci_debevec_f64.csv testdata/cv/hdr/calibrate/debevec_f64.csv
 
       - name: Configure (OpenCV defaults, module list limited, EXR tests on)
