@@ -86,6 +86,7 @@ PARAM_TEST_CASE(CvtColor, MatDepth, bool)
 
     void Near(double threshold)
     {
+        std::cout << "MEASURE ocl_color depth=" << dst_roi.depth() << " cn=" << dst_roi.channels() << " norm=" << cvtest::ocl::TestUtils::checkNorm2(dst_roi, udst_roi) << " threshold=" << threshold << " " << ::testing::UnitTest::GetInstance()->current_test_info()->name() << std::endl;
         OCL_EXPECT_MATS_NEAR(dst, threshold);
     }
 

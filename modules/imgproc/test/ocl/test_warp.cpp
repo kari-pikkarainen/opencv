@@ -347,6 +347,7 @@ OCL_TEST_P(Resize, Mat)
         OCL_OFF(cv::resize(src_roi, dst_roi, Size(), fx, fy, interpolation));
         OCL_ON(cv::resize(usrc_roi, udst_roi, Size(), fx, fy, interpolation));
 
+        { Mat d; absdiff(dst_roi, udst_roi, d); double m; minMaxLoc(d.reshape(1), 0, &m); std::cout << "MEASURE ocl_resize depth=" << depth << " cn=" << dst_roi.channels() << " interp=" << interpolation << " maxdiff=" << m << " eps=" << eps << std::endl; }
         OCL_EXPECT_MAT_N_DIFF(dst, eps);
     }
 }

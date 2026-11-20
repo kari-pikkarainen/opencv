@@ -57,6 +57,7 @@ jobs:
           OPENCV_TEST_DATA_PATH: ${{ github.workspace }}/extra/testdata
           OPENCV_IO_ENABLE_OPENEXR: "1"
         run: |
+          set +e
           run() { exe=$(find build/bin -name "$1*" -type f | head -1); "$exe" --gtest_filter="$2" > part.txt 2>&1; st=$?; cat part.txt >> out.txt; echo "$1 exit=$st" >> out.txt; }
           run opencv_test_photo 'Photo_CalibrateDebevec.*:Photo_CalibrateRobertson.regression:Photo_MergeDebevec.*:Photo_MergeRobertson.*'
           run opencv_test_features2d 'Features2d_DescriptorExtractor*.regression'
