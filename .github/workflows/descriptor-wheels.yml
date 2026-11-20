@@ -14,8 +14,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, ubuntu-24.04-arm, windows-latest, macos-latest]
-        version: ["4.5.5.64", "4.12.0.88", "4.14.0.94"]
+        include:
+          - {os: ubuntu-22.04, version: "4.2.0.34", py: "3.8"}
+          - {os: ubuntu-22.04, version: "4.3.0.38", py: "3.8"}
+          - {os: ubuntu-22.04, version: "4.4.0.46", py: "3.8"}
+          - {os: ubuntu-22.04, version: "4.5.1.48", py: "3.8"}
+          - {os: ubuntu-22.04, version: "4.5.3.56", py: "3.8"}
+          - {os: ubuntu-24.04, version: "4.12.0.88", py: "3.12"}
+          - {os: ubuntu-24.04, version: "4.14.0.94", py: "3.12"}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     name: ${{ matrix.os }} / ${{ matrix.version }}
@@ -27,7 +33,7 @@ jobs:
           sparse-checkout: ci-tools
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.py }}
       - name: Test data (features2d only)
         shell: bash
         run: |
@@ -35,7 +41,7 @@ jobs:
           cd extra && MSYS_NO_PATHCONV=1 git sparse-checkout set --no-cone 'testdata/cv/features2d/' && git checkout
       - name: Install wheel
         shell: bash
-        run: python -m pip install "numpy<2" "opencv-contrib-python-headless==${{ matrix.version }}"
+        run: python -m pip install "opencv-contrib-python-headless==${{ matrix.version }}" && python -c "import cv2, numpy; print(cv2.__version__, numpy.__version__)"
       - name: Check
         shell: bash
         run: |
