@@ -63,6 +63,9 @@ jobs:
           run opencv_test_features2d 'Features2d_DescriptorExtractor*.regression'
           run opencv_test_gapi '*Preproc4lpi*'
           run opencv_test_imgcodecs '*read_write_*/*:Imgcodecs_EXR.*'
+          echo "=== RESULTS ${{ matrix.os }} / ${{ matrix.config }}"
+          grep -E "MEASURE|exit=|^\[  FAILED  \]|^\[  PASSED  \]" out.txt
+          grep -E "^(WITH_IPP|HAVE_KLEIDICV|CPU_BASELINE_FINAL)" build/CMakeCache.txt || true
           {
             echo "### ${{ matrix.os }} / ${{ matrix.config }}"
             echo '```'
