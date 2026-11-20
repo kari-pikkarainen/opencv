@@ -14,14 +14,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - {os: ubuntu-22.04, version: "4.2.0.34", py: "3.8"}
-          - {os: ubuntu-22.04, version: "4.3.0.38", py: "3.8"}
-          - {os: ubuntu-22.04, version: "4.4.0.46", py: "3.8"}
-          - {os: ubuntu-22.04, version: "4.5.1.48", py: "3.8"}
-          - {os: ubuntu-22.04, version: "4.5.3.56", py: "3.8"}
-          - {os: ubuntu-24.04, version: "4.12.0.88", py: "3.12"}
-          - {os: ubuntu-24.04, version: "4.14.0.94", py: "3.12"}
+        os: [ubuntu-24.04, ubuntu-24.04-arm, windows-latest, macos-latest]
+        version: ["4.14.0.94"]
+        py: ["3.12"]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     name: ${{ matrix.os }} / ${{ matrix.version }}
@@ -46,5 +41,10 @@ jobs:
         shell: bash
         run: |
           echo "=== RESULTS ${{ matrix.os }} / ${{ matrix.version }} ($(python -c 'import platform; print(platform.machine())'))"
+          echo "-- current opencv_extra data:"
+          python ci-tools/brisk_check.py extra/testdata || true
+          python ci-tools/freak_check.py extra/testdata || true
+          cp ci-tools/newdata/descriptor-brisk ci-tools/newdata/descriptor-freak extra/testdata/cv/features2d/descriptor_extractors/
+          echo "-- regenerated data:"
           python ci-tools/brisk_check.py extra/testdata || true
           python ci-tools/freak_check.py extra/testdata || true
