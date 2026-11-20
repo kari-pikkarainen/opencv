@@ -1,0 +1,71 @@
+name: test-batch-measure
+
+# Temporary, fork-only measurement for an OpenCV test-tolerance batch. Not part of any PR.
+on:
+  push:
+    branches: [ci/test-batch-measure]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, windows-latest, macos-latest]
+        config: [default, no-ipp]
+        exclude:
+          - os: ubuntu-24.04-arm
+            config: no-ipp
+          - os: macos-latest
+            config: no-ipp
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    name: ${{ matrix.os }} / ${{ matrix.config }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Test data (opencv_extra, needed folders only)
+        shell: bash
+        run: |
+          git clone --filter=blob:none --no-checkout --depth 1 -b 4.x https://github.com/opencv/opencv_extra.git extra
+          cd extra && MSYS_NO_PATHCONV=1 git sparse-checkout set --no-cone 'testdata/cv/hdr/' 'testdata/cv/features2d/' 'testdata/cv/shared/' 'testdata/cv/imgcodecs/' && git checkout
+          cp ../ci_debevec_f64.csv testdata/cv/hdr/calibrate/debevec_f64.csv
+
+      - name: Configure (OpenCV defaults, module list limited, EXR tests on)
+        shell: bash
+        env:
+          OPENCV_IO_ENABLE_OPENEXR: "1"
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_LIST=core,imgproc,imgcodecs,photo,features2d,flann,gapi,ts -DBUILD_TESTS=ON -DBUILD_PERF_TESTS=OFF
+          -DBUILD_EXAMPLES=OFF -DBUILD_opencv_apps=OFF -DBUILD_JAVA=OFF -DBUILD_opencv_python3=OFF
+          ${{ matrix.config == 'no-ipp' && '-DWITH_IPP=OFF' || '' }}
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config Release --parallel 4 --target opencv_test_photo opencv_test_features2d opencv_test_imgcodecs opencv_test_gapi
+
+      - name: Run and summarize
+        shell: bash
+        env:
+          OPENCV_TEST_DATA_PATH: ${{ github.workspace }}/extra/testdata
+          OPENCV_IO_ENABLE_OPENEXR: "1"
+        run: |
+          run() { exe=$(find build/bin -name "$1*" -type f | head -1); "$exe" --gtest_filter="$2" > part.txt 2>&1; st=$?; cat part.txt >> out.txt; echo "$1 exit=$st" >> out.txt; }
+          run opencv_test_photo 'Photo_CalibrateDebevec.*:Photo_CalibrateRobertson.regression:Photo_MergeDebevec.*:Photo_MergeRobertson.*'
+          run opencv_test_features2d 'Features2d_DescriptorExtractor*.regression'
+          run opencv_test_gapi '*Preproc4lpi*'
+          run opencv_test_imgcodecs '*read_write_*/*:Imgcodecs_EXR.*'
+          {
+            echo "### ${{ matrix.os }} / ${{ matrix.config }}"
+            echo '```'
+            grep -E "MEASURE|exit=|^\[  FAILED  \]" out.txt | sort | uniq -c | sed 's/^ *//'
+            grep -E "^(WITH_IPP|HAVE_KLEIDICV|CPU_BASELINE_FINAL)" build/CMakeCache.txt || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

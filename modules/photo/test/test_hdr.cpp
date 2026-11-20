@@ -53,6 +53,7 @@ void checkEqual(Mat img0, Mat img1, double threshold, const string& name)
 {
     double max = 1.0;
     minMaxLoc(abs(img0 - img1), NULL, &max);
+    std::cout << "MEASURE " << name << " max=" << max << " threshold=" << threshold << std::endl;
     ASSERT_FALSE(max > threshold) << "max=" << max << " threshold=" << threshold << " method=" << name;
 }
 
@@ -226,6 +227,14 @@ TEST(Photo_MergeRobertson, regression)
     loadImage(test_path + "merge/robertson.hdr", expected);
     merge->process(images, result, times);
 
+    {
+        double worst = 0, worst_dark = 0; int bad_rel = 0;
+        for (int y = 0; y < expected.rows; y++) for (int x = 0; x < expected.cols; x++) {
+            Vec3f e = expected.at<Vec3f>(y, x), r = result.at<Vec3f>(y, x);
+            float m = std::max(e[0], std::max(e[1], e[2])); if (m <= 0) continue;
+            for (int c = 0; c < 3; c++) { double rel = std::abs(e[c] - r[c]) / m; worst = std::max(worst, rel); if (m < 1.f) worst_dark = std::max(worst_dark, rel); if (rel > 0.02) bad_rel++; } }
+        std::cout << "MEASURE MergeRobertson_rel worst=" << worst << " worst_dark(m<1)=" << worst_dark << " over2pct=" << bad_rel << std::endl;
+    }
     const float eps = 6.f;
     checkEqual(expected, result, eps, "MergeRobertson");
 }
@@ -403,6 +412,13 @@ TEST(Photo_CalibrateDebevec, regression)
     diff = diff.mul(1.0f / response);
     double max;
     minMaxLoc(diff, NULL, &max);
+    std::cout << "MEASURE CalibrateDebevec max_rel=" << max << " limit=0.15" << std::endl;
+    {
+        Mat ref64; std::ifstream probe((test_path + "calibrate/debevec_f64.csv").c_str());
+        if (probe.good()) { probe.close(); loadResponseCSV(test_path + "calibrate/debevec_f64.csv", ref64);
+            Mat d64 = abs(response - ref64); d64 = d64.mul(1.0f / response); double m64; minMaxLoc(d64, NULL, &m64);
+            std::cout << "MEASURE CalibrateDebevec_vs_f64 max_rel=" << m64 << " r128=" << response.at<Vec3f>(128) << std::endl; }
+    }
     ASSERT_LT(max, 0.15);
 }
 

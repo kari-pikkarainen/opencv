@@ -132,6 +132,8 @@ protected:
 #endif
         }
 
+        { size_t over=0; for(int y=0;y<validDescriptors.rows;y++){ if(distance(validDescriptors.ptr<ValueType>(y), calcDescriptors.ptr<ValueType>(y), dimension) > maxDist) over++; }
+          std::cout << "MEASURE " << name << " rows=" << validDescriptors.rows << " exact=" << exact_count << " maxDist=" << curMaxDist << " limit=" << maxDist << " counted_failed=" << failed_count << " TRUE_over_limit=" << over << " (" << 100.0*over/validDescriptors.rows << "%)" << std::endl; }
         float exact_percents = (100 * (float)exact_count / validDescriptors.rows);
         float failed_percents = (100 * (float)failed_count / validDescriptors.rows);
         std::stringstream ss;

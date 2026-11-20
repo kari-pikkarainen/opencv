@@ -208,7 +208,7 @@ const string exts[] = {
     || defined(HAVE_OPENJPEG)
     "jp2",
 #endif
-#if 0 /*defined HAVE_OPENEXR && !defined __APPLE__*/
+#if defined(HAVE_OPENEXR) && defined(OPENCV_IMGCODECS_ENABLE_OPENEXR_TESTS)
     "exr",
 #endif
     "bmp",

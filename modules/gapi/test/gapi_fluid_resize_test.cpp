@@ -829,6 +829,7 @@ TEST_P(Preproc4lpiTest, Test)
     cv::cvtColor(in_mat, rgb_mat, cv::COLOR_YUV2RGB_NV12);
     cv::resize(rgb_mat, out_mat_ocv, out_sz, 0, 0, interp);
 
+    std::cout << "MEASURE gapi_preproc4lpi maxdiff=" << cvtest::norm(out_mat(roi), out_mat_ocv(roi), NORM_INF) << " y_sz=" << y_sz << " out_sz=" << out_sz << std::endl;
 #if defined(__arm__) || defined(__aarch64__)
     EXPECT_GE(2, cvtest::norm(out_mat(roi), out_mat_ocv(roi), NORM_INF));
 #else
